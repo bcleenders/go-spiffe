@@ -31,6 +31,8 @@ func TestVerify(t *testing.T) {
 
 	// bad leaf cert... invalid spiffe ID
 	leafBad, _ := ca1.CreateX509Certificate(test.WithURIs(&url.URL{Scheme: "sparfe", Host: "domain1.test", Path: "/workload"}))
+	// bad leaf cert... no path component (root URI)
+	leafRootPath, _ := ca1.CreateX509Certificate(test.WithURIs(&url.URL{Scheme: "spiffe", Host: "domain1.test"}))
 	// bad set of roots... sets roots for ca2 under domain1.test
 	bundleBad := spiffebundle.FromX509Authorities(td1, bundle2.X509Authorities())
 
@@ -75,6 +77,12 @@ func TestVerify(t *testing.T) {
 			chain:  leafBad,
 			bundle: bundle1,
 			err:    `x509svid: could not get leaf SPIFFE ID: scheme is missing or invalid`,
+		},
+		{
+			name:   "bad leaf no non-root path SPIFFE ID",
+			chain:  leafRootPath,
+			bundle: bundle1,
+			err:    "x509svid: leaf certificate SPIFFE ID must have a non-root path",
 		},
 		{
 			name:   "verification fails",
